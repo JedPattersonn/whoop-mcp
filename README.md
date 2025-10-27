@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server for accessing Whoop fitness data. Integrate your WHOOP biometric data into Claude, LLMs, and other MCP-compatible applications.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/F1iI46?referralCode=I5P95N&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## Features
 
@@ -60,11 +60,37 @@ The server will run on `http://localhost:3000/mcp` by default.
 
 ### Environment Variables
 
-| Variable         | Required | Default | Description                 |
-| ---------------- | -------- | ------- | --------------------------- |
-| `WHOOP_EMAIL`    | Yes      | -       | Your Whoop account email    |
-| `WHOOP_PASSWORD` | Yes      | -       | Your Whoop account password |
-| `PORT`           | No       | 3000    | Server port                 |
+| Variable         | Required | Default | Description                                    |
+| ---------------- | -------- | ------- | ---------------------------------------------- |
+| `WHOOP_EMAIL`    | Yes      | -       | Your Whoop account email                       |
+| `WHOOP_PASSWORD` | Yes      | -       | Your Whoop account password                    |
+| `MCP_AUTH_TOKEN` | No       | -       | Optional authentication token for MCP requests |
+| `PORT`           | No       | 3000    | Server port                                    |
+
+### Optional Authentication
+
+To protect your MCP server from unauthorized access, you can set the `MCP_AUTH_TOKEN` environment variable. When set, all requests to the `/mcp` endpoint must include a matching Bearer token:
+
+```bash
+export MCP_AUTH_TOKEN='your-secret-token-here'
+```
+
+Or add it to your `.env` file:
+
+```bash
+echo "MCP_AUTH_TOKEN=your-secret-token-here" >> .env
+```
+
+Clients must then include the token in the Authorization header:
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Authorization: Bearer your-secret-token-here" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+```
+
+**Note:** If `MCP_AUTH_TOKEN` is not set, the server will accept all requests (useful for local development).
 
 ## Using with Claude Desktop
 
@@ -73,6 +99,8 @@ Add this configuration to your Claude Desktop config file:
 **MacOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+### Without Authentication (Local Development)
 
 ```json
 {
@@ -83,6 +111,24 @@ Add this configuration to your Claude Desktop config file:
       "env": {
         "WHOOP_EMAIL": "your-email@example.com",
         "WHOOP_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+### With Authentication (Recommended)
+
+```json
+{
+  "mcpServers": {
+    "whoop": {
+      "command": "bun",
+      "args": ["run", "/absolute/path/to/whoop-mcp/index.ts"],
+      "env": {
+        "WHOOP_EMAIL": "your-email@example.com",
+        "WHOOP_PASSWORD": "your-password",
+        "MCP_AUTH_TOKEN": "your-secret-token-here"
       }
     }
   }
@@ -239,7 +285,13 @@ The server automatically handles authentication:
 
 ## Security
 
-Never commit your `.env` file or share your WHOOP credentials. The server stores authentication tokens in memory only and they expire after 24 hours.
+### Best Practices
+
+- **Never commit** your `.env` file or share your WHOOP credentials
+- The server stores Whoop authentication tokens in memory only (they expire after 24 hours)
+- **Use `MCP_AUTH_TOKEN`** when exposing the server to a network or untrusted clients
+- Generate strong, random tokens for `MCP_AUTH_TOKEN` (e.g., using `openssl rand -hex 32`)
+- When running in production or on a network, **always** set `MCP_AUTH_TOKEN`
 
 ## Contributing
 

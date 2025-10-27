@@ -4,6 +4,7 @@ import { createWhoopMcpServer } from "./src/server";
 
 const WHOOP_EMAIL = process.env.WHOOP_EMAIL;
 const WHOOP_PASSWORD = process.env.WHOOP_PASSWORD;
+const MCP_AUTH_TOKEN = process.env.MCP_AUTH_TOKEN;
 
 if (!WHOOP_EMAIL || !WHOOP_PASSWORD) {
   console.error("Error: WHOOP_EMAIL and WHOOP_PASSWORD are required");
@@ -21,7 +22,40 @@ const server = createWhoopMcpServer({
 const app = express();
 app.use(express.json());
 
-app.post("/mcp", async (req, res) => {
+const authMiddleware: express.RequestHandler = (req, res, next) => {
+  if (!MCP_AUTH_TOKEN) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Authorization header is required",
+    });
+  }
+
+  const [scheme, token] = authHeader.split(" ");
+
+  if (scheme !== "Bearer" || !token) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid authorization format. Use 'Bearer <token>'",
+    });
+  }
+
+  if (token !== MCP_AUTH_TOKEN) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid authentication token",
+    });
+  }
+
+  next();
+};
+
+app.post("/mcp", authMiddleware, async (req, res) => {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -40,6 +74,16 @@ app
   .listen(port, () => {
     console.log(`Whoop MCP Server running on http://localhost:${port}/mcp`);
     console.log(`Authenticated as: ${WHOOP_EMAIL}`);
+    console.log(
+      `\nSecurity: ${MCP_AUTH_TOKEN ? "🔒 Authentication enabled" : "⚠️  Authentication disabled (public access)"}`
+    );
+    if (MCP_AUTH_TOKEN) {
+      console.log(`  Clients must include: Authorization: Bearer <token>`);
+    } else {
+      console.log(
+        `  To enable auth, set: export MCP_AUTH_TOKEN='your-secret-token'`
+      );
+    }
     console.log(`\nAvailable tools:`);
     console.log(
       `  - whoop_get_overview: Comprehensive overview with metrics, activities & stats`
