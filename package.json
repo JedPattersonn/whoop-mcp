@@ -1,0 +1,37 @@
+{
+  "name": "whoop-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for Whoop API integration",
+  "author": "Jed Patterson",
+  "license": "MIT",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "keywords": [
+    "mcp",
+    "whoop",
+    "fitness",
+    "biometrics",
+    "health",
+    "claude"
+  ],
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "express": "^5.1.0",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  }
+}
