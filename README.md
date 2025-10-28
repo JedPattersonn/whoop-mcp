@@ -95,9 +95,35 @@ docker stop whoop-mcp
 
 The Docker image is based on the official Bun Alpine image. The container includes health checks to monitor the server's status.
 
+## Smithery Deployment
+
+This server is configured to work with [Smithery](https://smithery.ai/), a platform for deploying MCP servers. When deployed on Smithery:
+
+1. **Configuration via Query Parameters**: Smithery passes your credentials as query parameters to the `/mcp` endpoint (defined in `smithery.yaml`):
+
+   - `whoopEmail` - Your Whoop account email
+   - `whoopPassword` - Your Whoop account password
+   - `mcpAuthToken` - Optional authentication token
+
+2. **Automatic Configuration**: The server automatically extracts these from query parameters when running on Smithery, so you don't need to set environment variables manually.
+
+3. **Deploy Button**: Use the Railway deploy button above for quick deployment, or follow [Smithery's documentation](https://smithery.ai/docs) for other deployment options.
+
+The `smithery.yaml` file in the repository root defines the configuration schema that Smithery uses to collect your credentials securely.
+
 ## Configuration
 
-### Environment Variables
+### Credentials Configuration
+
+The server supports two methods for providing credentials:
+
+1. **Query Parameters** (used by Smithery): Pass credentials as query parameters to the `/mcp` endpoint
+
+   - `whoopEmail` - Your Whoop account email
+   - `whoopPassword` - Your Whoop account password
+   - `mcpAuthToken` - Optional authentication token
+
+2. **Environment Variables** (used for local/Docker deployment):
 
 | Variable         | Required | Default | Description                                    |
 | ---------------- | -------- | ------- | ---------------------------------------------- |
@@ -105,6 +131,8 @@ The Docker image is based on the official Bun Alpine image. The container includ
 | `WHOOP_PASSWORD` | Yes      | -       | Your Whoop account password                    |
 | `MCP_AUTH_TOKEN` | No       | -       | Optional authentication token for MCP requests |
 | `PORT`           | No       | 3000    | Server port                                    |
+
+The server will check query parameters first, then fall back to environment variables if not provided.
 
 ### Optional Authentication
 

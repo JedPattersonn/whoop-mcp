@@ -2,60 +2,60 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express from "express";
 import { createWhoopMcpServer } from "./src/server";
 
-const WHOOP_EMAIL = process.env.WHOOP_EMAIL;
-const WHOOP_PASSWORD = process.env.WHOOP_PASSWORD;
-const MCP_AUTH_TOKEN = process.env.MCP_AUTH_TOKEN;
-
-if (!WHOOP_EMAIL || !WHOOP_PASSWORD) {
-  console.error("Error: WHOOP_EMAIL and WHOOP_PASSWORD are required");
-  console.error("\nSet your Whoop credentials:");
-  console.error("  export WHOOP_EMAIL='your-email@example.com'");
-  console.error("  export WHOOP_PASSWORD='your-password'");
-  process.exit(1);
-}
-
-const server = createWhoopMcpServer({
-  email: WHOOP_EMAIL,
-  password: WHOOP_PASSWORD,
-});
-
 const app = express();
 app.use(express.json());
 
-const authMiddleware: express.RequestHandler = (req, res, next) => {
-  if (!MCP_AUTH_TOKEN) {
-    return next();
-  }
+app.post("/mcp", async (req, res) => {
+  // Extract config from query parameters (Smithery passes configSchema values as query params)
+  const whoopEmail =
+    (req.query.whoopEmail as string) || process.env.WHOOP_EMAIL;
+  const whoopPassword =
+    (req.query.whoopPassword as string) || process.env.WHOOP_PASSWORD;
+  const mcpAuthToken =
+    (req.query.mcpAuthToken as string) || process.env.MCP_AUTH_TOKEN;
 
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({
-      error: "Unauthorized",
-      message: "Authorization header is required",
+  // Validate required credentials
+  if (!whoopEmail || !whoopPassword) {
+    return res.status(400).json({
+      error: "Bad Request",
+      message:
+        "whoopEmail and whoopPassword are required (via query params or environment variables)",
     });
   }
 
-  const [scheme, token] = authHeader.split(" ");
+  // Optional authentication check
+  if (mcpAuthToken) {
+    const authHeader = req.headers.authorization;
 
-  if (scheme !== "Bearer" || !token) {
-    return res.status(401).json({
-      error: "Unauthorized",
-      message: "Invalid authorization format. Use 'Bearer <token>'",
-    });
+    if (!authHeader) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Authorization header is required",
+      });
+    }
+
+    const [scheme, token] = authHeader.split(" ");
+
+    if (scheme !== "Bearer" || !token) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Invalid authorization format. Use 'Bearer <token>'",
+      });
+    }
+
+    if (token !== mcpAuthToken) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Invalid authentication token",
+      });
+    }
   }
 
-  if (token !== MCP_AUTH_TOKEN) {
-    return res.status(401).json({
-      error: "Unauthorized",
-      message: "Invalid authentication token",
-    });
-  }
-
-  next();
-};
-
-app.post("/mcp", authMiddleware, async (req, res) => {
+  // Create server instance with credentials from query params or env vars
+  const server = createWhoopMcpServer({
+    email: whoopEmail,
+    password: whoopPassword,
+  });
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -73,17 +73,18 @@ const port = parseInt(process.env.PORT || "3000");
 app
   .listen(port, () => {
     console.log(`Whoop MCP Server running on http://localhost:${port}/mcp`);
-    console.log(`Authenticated as: ${WHOOP_EMAIL}`);
     console.log(
-      `\nSecurity: ${MCP_AUTH_TOKEN ? "🔒 Authentication enabled" : "⚠️  Authentication disabled (public access)"}`
+      `\nConfiguration: Credentials and auth token should be provided via query parameters`
     );
-    if (MCP_AUTH_TOKEN) {
-      console.log(`  Clients must include: Authorization: Bearer <token>`);
-    } else {
-      console.log(
-        `  To enable auth, set: export MCP_AUTH_TOKEN='your-secret-token'`
-      );
-    }
+    console.log(`  - whoopEmail: Required`);
+    console.log(`  - whoopPassword: Required`);
+    console.log(
+      `  - mcpAuthToken: Optional (enables Bearer token authentication)`
+    );
+    console.log(`\nAlternatively, use environment variables:`);
+    console.log(`  - WHOOP_EMAIL`);
+    console.log(`  - WHOOP_PASSWORD`);
+    console.log(`  - MCP_AUTH_TOKEN`);
     console.log(`\nAvailable tools:`);
     console.log(
       `  - whoop_get_overview: Comprehensive overview with metrics, activities & stats`
