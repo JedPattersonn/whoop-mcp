@@ -67,7 +67,9 @@ export class WhoopClient {
       };
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to login: ${error.message}`);
+        throw new Error(
+          `Failed to login with email ${loginEmail}: ${error.message}`
+        );
       }
       throw error;
     }
