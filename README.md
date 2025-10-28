@@ -56,6 +56,45 @@ bun run dev
 
 The server will run on `http://localhost:3000/mcp` by default.
 
+## Docker Deployment
+
+1. **Create a `.env` file with your credentials:**
+
+```bash
+cp .env.example .env
+# Edit .env with your actual credentials
+```
+
+2. **Build the Docker image:**
+
+```bash
+docker build -t whoop-mcp .
+```
+
+3. **Run the container:**
+
+```bash
+docker run -d \
+  --name whoop-mcp \
+  whoop-mcp
+```
+
+The `--env-file .env` flag automatically loads all environment variables from your `.env` file.
+
+4. **View logs:**
+
+```bash
+docker logs -f whoop-mcp
+```
+
+5. **Stop the container:**
+
+```bash
+docker stop whoop-mcp
+```
+
+The Docker image is based on the official Bun Alpine image. The container includes health checks to monitor the server's status.
+
 ## Configuration
 
 ### Environment Variables
