@@ -2,6 +2,7 @@
 
 A Model Context Protocol (MCP) server for accessing Whoop fitness data. Integrate your WHOOP biometric data into Claude, LLMs, and other MCP-compatible applications.
 
+[![smithery badge](https://smithery.ai/badge/@JedPattersonn/whoop-mcp)](https://smithery.ai/server/@JedPattersonn/whoop-mcp)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/F1iI46?referralCode=I5P95N&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## Features
@@ -13,6 +14,14 @@ A Model Context Protocol (MCP) server for accessing Whoop fitness data. Integrat
 - **Healthspan** - Biological age and pace of aging metrics
 
 ## Quick Start
+
+### Installing via Smithery
+
+To install WHOOP automatically via [Smithery](https://smithery.ai/server/@JedPattersonn/whoop-mcp):
+
+```bash
+npx -y @smithery/cli install @JedPattersonn/whoop-mcp
+```
 
 1. **Clone the repository:**
 
